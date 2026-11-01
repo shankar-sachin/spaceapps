@@ -1,4 +1,4 @@
 import numpy
 import pandas as pd
 import matplotlib.pyplot as plt
-import astropy as ap
+import astropy
