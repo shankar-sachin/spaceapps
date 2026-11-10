@@ -1,4 +1,5 @@
-import { SectionHeader } from './Slot.jsx';
+import { PSI } from '../data/index.js';
+import { SectionHeader } from './SectionHeader.jsx';
 
 export default function About() {
   return (
@@ -6,17 +7,13 @@ export default function About() {
       <SectionHeader id="about-h" kicker="About" title="What Habitat Lens does" />
       <div className="max-w-3xl space-y-3 text-sm leading-relaxed text-dim">
         <p>
-          Built for the 2026 NASA Space Apps Challenge, <span className="text-ink">Flame in Freefall</span>.
-          Pick a crew-habitat atmosphere and Habitat Lens will rank NASA microgravity combustion
-          investigations by how close their tested conditions are to it.
+          Built for the 2026 NASA Space Apps Challenge, <span className="text-ink">Flame in Freefall</span>. Pick a crew-habitat
+          atmosphere and see which of the {PSI.stats.total} NASA Physical Sciences Informatics (PSI) combustion records actually
+          tested something like it.
         </p>
         <p>
-          It flags results that rely on extrapolation, and shows where no evidence exists at all.
-          A super intelligence (SI) helps parse habitat descriptions, extract tested ranges, and
-          explain rankings. Every SI output is labeled and checked against source quotes.
-        </p>
-        <p className="text-amber">
-          This build is a base layout. Every dashed outline is a slot waiting for real data.
+          PSI stores no test conditions as data, so Habitat Lens never scores or guesses. It only shows conditions that a record
+          states in its own words, each with the quote it came from. Anything not stated stays empty, and that emptiness is the result.
         </p>
       </div>
     </section>

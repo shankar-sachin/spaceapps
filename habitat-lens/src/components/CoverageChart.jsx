@@ -1,89 +1,88 @@
 import { useEffect, useRef } from 'react';
 import Plotly from 'plotly.js-basic-dist-min';
-import { HABITAT_PRESETS, TESTED_ENVELOPES } from '../data/placeholders.js';
-import { SectionHeader } from './Slot.jsx';
+import { HABITAT_PRESETS, PSI, recordByAcc } from '../data/index.js';
+import { SectionHeader } from './SectionHeader.jsx';
 
-// Axis framing only (covers every preset); not data.
-const X_RANGE = [0, 100];
-const Y_RANGE = [0, 16];
+const C = { ink: '#ece7df', dim: '#a39d94', line: '#2a313a', flame: '#ff7a1a', soft: '#ffa463', amber: '#f2b233', sky: '#7dd3fc', panel: '#11151a' };
+const Y_RANGE_PSIA = [3, 50]; // view framing only; log scale so habitat and test pressures both fit
 
-// Where unfilled envelope slots are drawn, in PAPER coordinates (0..1 of the
-// plot area). These positions are pure layout and carry no meaning.
-const GHOST_POSITIONS = [
-  { x0: 0.06, x1: 0.26, y0: 0.62, y1: 0.86 },
-  { x0: 0.36, x1: 0.58, y0: 0.12, y1: 0.36 },
-  { x0: 0.7, x1: 0.94, y0: 0.5, y1: 0.74 },
-];
+const nameOf = (acc) => `${recordByAcc.get(acc)?.acronym ?? acc} (${acc})`;
 
-const C = { ink: '#ece7df', dim: '#a39d94', line: '#2a313a', flame: '#ff7a1a', panel: '#11151a' };
-
-function buildShapes() {
-  const shapes = [];
-  const annotations = [];
-  TESTED_ENVELOPES.forEach((env, i) => {
-    const filled = [env.o2Min, env.o2Max, env.pressureMinPsia, env.pressureMaxPsia].every((v) => v !== null);
-    if (filled) {
-      shapes.push({
-        type: 'rect', xref: 'x', yref: 'y',
-        x0: env.o2Min, x1: env.o2Max, y0: env.pressureMinPsia, y1: env.pressureMaxPsia,
-        line: { color: C.flame, width: 1 }, fillcolor: 'rgba(255,122,26,0.15)',
+function conditionTraces() {
+  const traces = [];
+  for (const c of PSI.conditions) {
+    const p = c.pressurePsia;
+    const src = `${c.field}: “${c.quote}”`.replace(/(.{70}\S*)\s/g, '$1<br>');
+    if (c.kind === 'range') {
+      traces.push({
+        type: 'scatter', mode: 'lines', fill: 'toself', name: `${nameOf(c.accession)} stated span`,
+        x: [c.o2.min, c.o2.max, c.o2.max, c.o2.min, c.o2.min],
+        y: [p.min, p.min, p.max, p.max, p.min],
+        line: { color: C.soft, width: 1.5 }, fillcolor: 'rgba(255,164,99,0.14)',
+        hovertemplate: `${nameOf(c.accession)}<br>${c.o2.min} to ${c.o2.max}% O2 · ${p.min} to ${p.max} psia<br><br>${src}<extra></extra>`,
       });
-      return;
+    } else if (c.kind === 'pressure-band') {
+      traces.push({
+        type: 'scatter', mode: 'lines', fill: 'toself', name: `${nameOf(c.accession)} pressure only`,
+        x: [0, 100, 100, 0, 0], y: [p.min, p.min, p.max, p.max, p.min],
+        line: { color: C.amber, width: 1, dash: 'dot' }, fillcolor: 'rgba(242,178,51,0.06)',
+        hovertemplate: `${nameOf(c.accession)}<br>${p.min} to ${p.max} psia, O2 not stated<br><br>${src}<extra></extra>`,
+      });
     }
-    // DATA SLOT: PSI JSON + SI extraction -> TESTED_ENVELOPES[i] {o2Min, o2Max, pressureMinPsia, pressureMaxPsia}
-    const g = GHOST_POSITIONS[i % GHOST_POSITIONS.length];
-    shapes.push({
-      type: 'rect', xref: 'paper', yref: 'paper', ...g,
-      line: { color: C.dim, width: 1, dash: 'dash' }, fillcolor: 'rgba(163,157,148,0.05)',
+  }
+  const pts = PSI.conditions.filter((c) => c.kind === 'point');
+  if (pts.length) {
+    traces.push({
+      type: 'scatter', mode: 'markers', name: `${nameOf(pts[0].accession)} named atmospheres`,
+      x: pts.map((c) => c.o2.value), y: pts.map((c) => c.pressurePsia.value),
+      marker: { symbol: 'circle-open', size: 16, color: C.sky, line: { width: 2 } },
+      hovertemplate: pts.map((c) => `${nameOf(c.accession)}<br>%{x}% O2 · %{y} psia<br><br>${c.field}: “${c.quote}”`.replace(/(.{70}\S*)\s/g, '$1<br>') + '<extra></extra>'),
     });
-    annotations.push({
-      xref: 'paper', yref: 'paper', x: (g.x0 + g.x1) / 2, y: (g.y0 + g.y1) / 2,
-      text: 'tested envelope<br>slot', showarrow: false,
-      font: { family: 'IBM Plex Mono, monospace', size: 10, color: C.dim },
-    });
-  });
-  return { shapes, annotations };
+  }
+  return traces;
 }
 
-export default function CoverageChart({ habitat }) {
+export default function CoverageChart({ preset }) {
   const ref = useRef(null);
 
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
-    const { shapes, annotations } = buildShapes();
-    const hasPoint = Number.isFinite(habitat.o2Percent) && Number.isFinite(habitat.pressurePsia);
-    const preset = HABITAT_PRESETS.find((p) => p.id === habitat.presetId);
-    const name = preset ? preset.label : 'Custom habitat';
-
+    const others = HABITAT_PRESETS.filter((p) => p.id !== preset.id);
     const data = [
+      ...conditionTraces(),
       {
-        type: 'scatter', mode: 'markers+text',
-        x: hasPoint ? [habitat.o2Percent] : [],
-        y: hasPoint ? [habitat.pressurePsia] : [],
-        text: hasPoint ? [name] : [], textposition: 'top center',
-        textfont: { family: 'IBM Plex Sans, sans-serif', color: C.ink, size: 12 },
-        marker: { symbol: 'star', size: 18, color: C.flame, line: { color: '#ffd2ad', width: 1 } },
-        hovertemplate: `${name}<br>O2 %{x}%<br>%{y} psia<extra></extra>`,
-        name,
+        type: 'scatter', mode: 'markers', name: 'Other presets', showlegend: false,
+        x: others.map((p) => p.o2Percent), y: others.map((p) => p.pressurePsia), text: others.map((p) => p.label),
+        marker: { symbol: 'diamond-open', size: 9, color: C.dim },
+        hovertemplate: '%{text}<br>%{x}% O2 · %{y} psia<extra></extra>',
+      },
+      {
+        type: 'scatter', mode: 'markers+text', name: preset.label,
+        x: [preset.o2Percent], y: [preset.pressurePsia], text: [preset.label], textposition: 'bottom center',
+        textfont: { color: C.ink, size: 12 },
+        marker: { symbol: 'star', size: 20, color: C.flame, line: { color: '#ffd2ad', width: 1 } },
+        hovertemplate: `${preset.label}<br>%{x}% O2 · %{y} psia<extra></extra>`,
       },
     ];
-    const axis = (title, range) => ({
-      title: { text: title, font: { color: C.dim, size: 12 } },
-      range, gridcolor: C.line, zerolinecolor: C.line, linecolor: C.line,
-      tickfont: { family: 'IBM Plex Mono, monospace', color: C.dim, size: 11 },
-      fixedrange: true,
-    });
-    const layout = {
-      paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: C.panel,
-      margin: { l: 56, r: 16, t: 16, b: 52 },
-      xaxis: axis('O2 (%)', X_RANGE),
-      yaxis: axis('Total pressure (psia)', Y_RANGE),
-      showlegend: false, shapes, annotations,
-      font: { color: C.ink },
-    };
-    Plotly.react(el, data, layout, { displayModeBar: false, responsive: true });
-  }, [habitat]);
+    const axisBase = { gridcolor: C.line, zerolinecolor: C.line, linecolor: C.line, tickfont: { family: 'IBM Plex Mono, monospace', color: C.dim, size: 11 }, fixedrange: true };
+    Plotly.react(
+      el,
+      data,
+      {
+        paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: C.panel, font: { color: C.ink, family: 'IBM Plex Sans, sans-serif' },
+        margin: { l: 56, r: 12, t: 8, b: 48 },
+        xaxis: { ...axisBase, title: { text: 'O2 (%)', font: { color: C.dim, size: 12 } }, range: [0, 102] },
+        yaxis: {
+          ...axisBase, type: 'log', title: { text: 'Total pressure (psia, log)', font: { color: C.dim, size: 12 } },
+          range: Y_RANGE_PSIA.map(Math.log10), tickvals: [3, 4, 5, 7, 10, 15, 20, 30, 50],
+        },
+        legend: { orientation: 'h', x: 0, y: -0.2, yanchor: 'top', font: { size: 11, color: C.dim } },
+        hoverlabel: { bgcolor: '#171c22', bordercolor: C.line, font: { color: C.ink, size: 11 } },
+      },
+      { displayModeBar: false, responsive: true },
+    );
+  }, [preset]);
 
   useEffect(() => {
     const el = ref.current;
@@ -98,18 +97,17 @@ export default function CoverageChart({ habitat }) {
 
   return (
     <section aria-labelledby="coverage-h" className="panel">
-      <SectionHeader id="coverage-h" kicker="03 · Coverage" title="Tested conditions vs your habitat" />
+      <SectionHeader id="coverage-h" kicker="03 · Coverage" title="Stated test conditions vs your habitat" />
       <div
         ref={ref}
-        className="h-[320px] w-full sm:h-[420px]"
+        className="h-[460px] w-full sm:h-[480px]"
         role="img"
-        aria-label="Chart of O2 percent against total pressure. The star marks your selected habitat. Dashed boxes are unfilled slots for tested envelopes."
+        aria-label={`O2 percent against total pressure. The star is ${preset.label}. Shapes are test conditions quoted from ${PSI.stats.withNumericConditions} PSI records; everything else is empty.`}
       />
-      <p className="mt-3 text-center font-mono text-sm uppercase tracking-[0.25em] text-flame-soft">
-        Empty space is the finding.
-      </p>
-      <p className="mt-1 text-center text-xs text-dim">
-        Dashed boxes are layout placeholders. Their positions mean nothing until envelope data is loaded.
+      <p className="mt-3 text-center font-mono text-sm uppercase tracking-[0.25em] text-flame-soft">Empty space is the finding.</p>
+      <p className="mx-auto mt-1 max-w-2xl text-center text-xs text-dim">
+        Only {PSI.stats.withNumericConditions} of {PSI.stats.total} records state numeric conditions in their text. Pressures
+        given in atm are converted to psia (1 atm = 14.696 psia). Hover a shape for its source quote.
       </p>
     </section>
   );

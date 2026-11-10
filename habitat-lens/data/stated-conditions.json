@@ -1,0 +1,78 @@
+{
+  "_about": "Numeric test conditions that PSI record text states outright. Curated by hand from data/psi_combustion_records.csv. Every quote must appear verbatim (whitespace-normalized) in the named CSV field, or `npm run data` fails. Values are copied exactly as stated; atm values are converted to psia at build time (1 atm = 14.696 psia).",
+  "conditions": [
+    {
+      "id": "bre-sea-level",
+      "accession": "PSI-20",
+      "field": "Objectives",
+      "quote": "NASA - considered atmosphere for human space missions will be examined: 14.7 psia, 21 % oxygen: 10.2 psia, 26.5 %; and 8.2 psia, 34 % oxygen.",
+      "kind": "point",
+      "pressure": { "value": 14.7, "unit": "psia" },
+      "o2": { "value": 21, "unit": "%" }
+    },
+    {
+      "id": "bre-10.2",
+      "accession": "PSI-20",
+      "field": "Objectives",
+      "quote": "NASA - considered atmosphere for human space missions will be examined: 14.7 psia, 21 % oxygen: 10.2 psia, 26.5 %; and 8.2 psia, 34 % oxygen.",
+      "kind": "point",
+      "pressure": { "value": 10.2, "unit": "psia" },
+      "o2": { "value": 26.5, "unit": "%" }
+    },
+    {
+      "id": "bre-8.2",
+      "accession": "PSI-20",
+      "field": "Objectives",
+      "quote": "NASA - considered atmosphere for human space missions will be examined: 14.7 psia, 21 % oxygen: 10.2 psia, 26.5 %; and 8.2 psia, 34 % oxygen.",
+      "kind": "point",
+      "pressure": { "value": 8.2, "unit": "psia" },
+      "o2": { "value": 34, "unit": "%" }
+    },
+    {
+      "id": "flex2-envelope",
+      "accession": "PSI-68",
+      "field": "Approach",
+      "quote": "varied in pressure between 0.5 atm to 3.0 atm and O2 concentration between 0.1 to 0.4 mole fraction with the diluent gas making up the balance.",
+      "kind": "range",
+      "pressure": { "min": 0.5, "max": 3.0, "unit": "atm" },
+      "o2": { "min": 10, "max": 40, "unit": "%", "statedAs": "0.1 to 0.4 mole fraction" }
+    },
+    {
+      "id": "cfi-chamber",
+      "accession": "PSI-39",
+      "field": "Approach",
+      "quote": "delivers the desired gas mixture to the combustion chamber ranging from 0.25 to 0.5 atm.",
+      "kind": "pressure-band",
+      "pressure": { "min": 0.25, "max": 0.5, "unit": "atm" },
+      "o2": null
+    },
+    {
+      "id": "flex-loi",
+      "accession": "PSI-69",
+      "field": "Approach",
+      "quote": "Select the test pressure (0.5 − 1.5 atm) for the LOI tests.",
+      "kind": "pressure-band",
+      "pressure": { "min": 0.5, "max": 1.5, "unit": "atm" },
+      "o2": null
+    },
+    {
+      "id": "bass2-o2",
+      "accession": "PSI-25",
+      "field": "Approach",
+      "quote": "Main variables are airflow speed and oxygen concentration (oxygen varied below 21% by adding nitrogen).",
+      "kind": "o2-below",
+      "pressure": null,
+      "o2": { "below": 21, "unit": "%" }
+    }
+  ],
+  "contradictions": [
+    {
+      "accession": "PSI-39",
+      "summary": "Objectives and Approach state different pressure ranges.",
+      "quotes": [
+        { "field": "Objectives", "quote": "at pressures ranging from 0.25 atm to 5 atm." },
+        { "field": "Approach", "quote": "delivers the desired gas mixture to the combustion chamber ranging from 0.25 to 0.5 atm." }
+      ]
+    }
+  ]
+}
