@@ -1,0 +1,53 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html { color-scheme: dark; }
+  body {
+    @apply bg-void text-ink font-sans antialiased;
+    background-image:
+      radial-gradient(ellipse at top, rgba(255, 122, 26, 0.06), transparent 60%);
+    min-height: 100vh;
+  }
+  :focus-visible {
+    outline: 2px solid #ffa463;
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+}
+
+@layer components {
+  .panel {
+    @apply rounded-xl border border-line bg-panel p-4 sm:p-6;
+  }
+  .panel-title {
+    @apply flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-flame-soft;
+  }
+  /* Intentional hole: every placeholder data slot uses this dashed look */
+  .slot {
+    @apply inline-flex items-center rounded-md border border-dashed border-dim/50 bg-panel2/40 px-2 py-0.5 text-sm italic text-dim;
+  }
+  .slot-block {
+    @apply rounded-lg border border-dashed border-dim/50 bg-panel2/40 p-3 text-sm italic text-dim;
+  }
+  .slot-tag {
+    @apply font-mono text-[10px] not-italic uppercase tracking-widest text-flame-soft/80;
+  }
+  .btn {
+    @apply inline-flex items-center justify-center rounded-md border border-line bg-panel2 px-3 py-2 text-sm font-medium text-ink transition hover:border-flame/70 hover:text-flame-soft;
+  }
+  .btn-primary {
+    @apply border-flame bg-flame/15 text-flame-soft hover:bg-flame/25;
+  }
+  .field-label {
+    @apply mb-1 block text-xs font-medium uppercase tracking-wider text-dim;
+  }
+  .field {
+    @apply w-full rounded-md border border-line bg-void px-3 py-2 font-mono text-ink placeholder:text-dim/70 focus:border-flame focus:outline-none;
+  }
+}
+
+input[type='range'] {
+  accent-color: #ff7a1a;
+}
